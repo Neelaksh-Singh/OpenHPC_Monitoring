@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+useradd -m -s /bin/false prometheus
+id prometheus
+mkdir /etc/prometheus
+mkdir /var/lib/prometheus
+chown prometheus /var/lib/prometheus/
+dnf install wget -y
+wget https://github.com/prometheus/prometheus/releases/download/v2.37.0/prometheus-2.37.0.linux-amd64.tar.gz 
+tar -zxpvf prometheus-2.37.0.linux-amd64.tar.gz
+cp ./prometheus-2.37.0.linux-amd64/prometheus /usr/local/bin
+cp ./prometheus-2.37.0.linux-amd64/promtool  /usr/local/bin
+
+#-------------------------
+#setup for compute-nodes
+
+yum install golang -y
+yum -y --installroot=$CHROOT install golang
+
+git clone https://github.com/vpenso/prometheus-slurm-exporter.git 
+make ./prometheus-slurm-exporter
+
+
+
+#=========================
+firewall-cmd --add-port=9090/tcp --permanent
+firewall-cmd --reload
+systemctl daemon-reload
+systemctl start prometheus
+systemctl enable prometheus

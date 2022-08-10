@@ -1,0 +1,4 @@
+ wwsh -y provision set compute-1 --vnfs=rocky8.5 --bootstrap=`uname -r` --files=dynamic_hosts,passwd,group,shadow,munge.key,network
+
+
+08:00:27:F9:A2:8A 

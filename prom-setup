@@ -24,17 +24,15 @@ cp $PROM_SRC/promtool /usr/local/bin/
 
 
 #-------------------------
-cd
 #setup for compute-nodes
 
-yum install golang -y
-yum -y --installroot=$CHROOT install golang
+# yum -y --installroot=$CHROOT install golang
 
 git clone https://github.com/vpenso/prometheus-slurm-exporter.git 
-make ./prometheus-slurm-exporter
+make ./prometheus-slurm-exporter/prometheus-slurm-exporter
 
 
-
+cd 
 #=========================
 firewall-cmd --add-port=9090/tcp --permanent
 firewall-cmd --reload

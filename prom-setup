@@ -17,10 +17,16 @@ wget https://github.com/prometheus/prometheus/releases/download/v2.37.0/promethe
 tar -zxpvf prometheus-2.37.0.linux-amd64.tar.gz
 rm -rf prometheus-2.37.0.linux-amd64.tar.gz
 
+VERSION=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest|grep tag_name|cut -d '"' -f 4|sed 's/v//')
+wget https://github.com/prometheus/node_exporter/releases/download/v$VERSION/node_exporter-$VERSION.linux-amd64.tar.gz
+tar -xf node_exporter-$VERSION.linux-*.tar.gz
+mv node_exporter-*/node_exporter /usr/local/bin
+
 export PROM_SRC=/usr/src/prometheus-*
-cp $PROM_SRC/prometheus.yml /etc/prometheus/
+# cp $PROM_SRC/prometheus.yml /etc/prometheus/
 cp $PROM_SRC/prometheus /usr/local/bin/
 cp $PROM_SRC/promtool /usr/local/bin/
+chown -R prometheus:prometheus /var/lib/prometheus/
 
 
 #-------------------------
@@ -30,12 +36,36 @@ cp $PROM_SRC/promtool /usr/local/bin/
 
 git clone https://github.com/vpenso/prometheus-slurm-exporter.git 
 make ./prometheus-slurm-exporter/prometheus-slurm-exporter
+mv /usr/src/prometheus-slurm-exporter/bin/prometheus-slurm-exporter /usr/local/bin
 
 
 cd 
-#=========================
-firewall-cmd --add-port=9090/tcp --permanent
-firewall-cmd --reload
+
+# Setting up Services 
+
+yes | cp -rf ./prometheus.yml /etc/prometheus/ 
+
+mv ./prometheus.service /etc/systemd/system 
+mv ./node_exporter.service /etc/systemd/system 
+mv ./prometheus-slurm-exporter.service /etc/systemd/system 
+
+/sbin/restorecon -v /usr/local/bin/prometheus
+/sbin/restorecon -v /usr/local/bin/promtool
+/sbin/restorecon -v /usr/local/bin/node_exporter
+/sbin/restorecon -v /usr/local/bin/prometheus-slurm-exporter
+
 systemctl daemon-reload
-systemctl start prometheus
-systemctl enable prometheus
+
+
+# Starting the services
+
+systemctl enable --now node_exporter.service
+systemctl enable --now prometheus.service
+systemctl enable --now prometheus-slurm-exporter.service
+
+#=========================
+# firewall-cmd --add-port=9090/tcp --permanent
+# firewall-cmd --reload
+# systemctl daemon-reload
+# systemctl start prometheus
+# systemctl enable prometheus
